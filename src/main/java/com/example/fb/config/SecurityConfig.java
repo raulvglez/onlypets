@@ -1,5 +1,10 @@
 package com.example.fb.config;
 
+import com.example.fb.implementations.UserDetailsServiceImplementation;
+import jakarta.servlet.Filter;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -15,10 +20,11 @@ import org.springframework.security.web.SecurityFilterChain;
 @Profile("!https")
 public class SecurityConfig {
 
-    private UserService userService;
+    @Autowired
+    private UserDetailsServiceImplementation userDetailsServiceImplementation;
 
     @Bean
-    public void filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers(HttpMethod.GET, "/index*", "/static/**", "/*.js", "/*.json", "/*.ico")
@@ -33,16 +39,16 @@ public class SecurityConfig {
         http.logout()
                 .permitAll()
                 .logoutSuccessUrl("/index.html?logout");
-    }
 
-    //Crea el encriptador de contraseÃ±as
+        return http.build();
+    }
 
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(4);
     }
 
-    public void configureGlobalLogin(AuthenticationManagerBuilder authentication) {
-        authentication.userService
+    public void configureGlobalLogin(AuthenticationManagerBuilder authentication) throws Exception {
+        authentication.userDetailsService(userDetailsServiceImplementation).passwordEncoder(passwordEncoder());
     }
 
 }
